@@ -6,22 +6,25 @@ public class SchiffeVersenken {
 	
 	private static boolean gameover = false;
 	private static Scanner scan = new Scanner(System.in);
-	private static Spielfeld feld;
+	public static Spielfeld feld;
 	private static boolean validMove = true;
 	
-	public static void init() {
-		// Spielfeld erstellen unter angabe der Breite/Höhe und des Spielmodus
-		feld = new Spielfeld(10, 10, Spielmodus.vsAI);
+	public static void clear(int nl) {
+		for(int i = 0; i < nl; i++) {
+			System.out.println();
+		}
 	}
 
 	public static void main(String[] args) {
-		init();
+		clear(20);
+		MainMenu mm = new MainMenu();
+		mm.show();
 		gameloop();
 	}
 	
 	private static void gameloop() {
 		while(!gameover) {
-			feld.show();
+			clear(20);
 			System.out.println("Spieler " + feld.turn + " ist an der Reihe!");
 			switch(feld.mode) {
 				case vsAI:
@@ -34,10 +37,12 @@ public class SchiffeVersenken {
 					break;
 				case local:
 					if(feld.turn == Player.SELF) {
+						feld.show();
 						String input = scan.next();
 						validMove = feld.enemyField.shoot(input);
 					} else {
 						String input = scan.next();
+						feld.enemyField.show();
 						validMove = feld.shoot(input);
 					}
 					break;
@@ -46,10 +51,12 @@ public class SchiffeVersenken {
 			}
 			
 			if(feld.isOver()) {
+				feld.show();
 				System.out.println(Player.ENEMY +" hat gewonnen!");
 				gameover = true;
 			};
 			if(feld.enemyField.isOver()) {
+				feld.show();
 				System.out.println(Player.SELF +" hat gewonnen!");
 				gameover = true;
 			};

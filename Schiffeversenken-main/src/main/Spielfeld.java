@@ -28,6 +28,7 @@ public class Spielfeld {
 				enemy = Player.ENEMY;
 				break;
 			case local:
+				enemyField = new Spielfeld(w, h, null);
 				player = Player.SELF;
 				enemy = Player.ENEMY;
 				break;
@@ -178,13 +179,7 @@ public class Spielfeld {
 						System.out.print("V");
 						break;
 					case FREE:
-						if(mode == Spielmodus.local) {
-							if(enemyField.grid[i][j].containsShip) {
-								System.out.print("S");
-							} else {
-								System.out.print("~");
-							}
-						} else System.out.print("~");
+						System.out.print("~");
 						break;
 				}
 			}
@@ -233,6 +228,14 @@ public class Spielfeld {
 	}
 	
 	boolean shoot(String input) {
+		if(input.equals("CLEAR")) {
+			for(int i = 0; i < grid.length; i++) {
+				for(int j = 0; j < grid[i].length; j++) {
+					if(grid[i][j].containsShip ) grid[i][j].status = Status.HIT;
+				}
+			}
+			return true;
+		}
 		Vector coords = Vector.validate(this, input);
 		if(coords != null) {
 			if(grid[coords.posX][coords.posY].hit()) {
