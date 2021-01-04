@@ -11,12 +11,6 @@ public class Spielfeld {
 	Player turn;
 	Vector recentHit;
 	
-	void init(Spielfeld eF, Player p, Player e) {
-		enemyField = eF;
-		enemy = e;
-		player = p;
-	}
-	
 	Spielfeld(int w, int h, Spielmodus m) {
 		width = w;
 		height = h;
@@ -27,166 +21,115 @@ public class Spielfeld {
 				grid[i][j] = new Space();
 			}
 		}
-	}
-	/*Anzahl und Größe der Schiffe
-    • ein Schlachtschiff (5 Kästchen)
-    • zwei Kreuzer (je 4 Kästchen)
-    • drei Zerstörer (je 3 Kästchen)
-    • vier U-Boote (je 2 Kästchen)*/
-	
-	void placeShip(ShipType type, Vector vec, Direction dir) {
-		switch(type) {
-			case Schlachtschiff:
-				switch(dir) {
-					case RIGHT:
-						for(int i = vec.posY; i < vec.posY+5; i++) {
-							grid[vec.posX][i].containsShip = true;
-						}
-						break;
-					case DOWN:
-						for(int i = vec.posX; i < vec.posX+5; i++) {
-							grid[i][vec.posY].containsShip = true;
-						}
-						break;
-				}
+		if(m != null) switch(m) {
+			case vsAI:
+				enemyField = new Spielfeld(w, h, null);
+				enemyField.enemyField = this;
+				player = Player.SELF;
+				enemy = Player.ENEMY;
 				break;
-			case Kreuzer:
-				switch(dir) {
-					case RIGHT:
-						for(int i = vec.posY; i < vec.posY+4; i++) {
-							grid[vec.posX][i].containsShip = true;
-						}
-						break;
-					case DOWN:
-						for(int i = vec.posX; i < vec.posX+4; i++) {
-							grid[i][vec.posY].containsShip = true;
-						}
-						break;
-				}
+			case local:
+				enemyField = new Spielfeld(w, h, null);
+				enemyField.enemyField = this;
+				player = Player.SELF;
+				enemy = Player.ENEMY;
 				break;
-			case Zerstoerer:
-				switch(dir) {
-					case RIGHT:
-						for(int i = vec.posY; i < vec.posY+3; i++) {
-							grid[vec.posX][i].containsShip = true;
-						}
-						break;
-					case DOWN:
-						for(int i = vec.posX; i < vec.posX+3; i++) {
-							grid[i][vec.posY].containsShip = true;
-						}
-						break;
-				}
+			case online:
+				player = Player.SELF;
+				enemy = Player.ENEMY;
 				break;
-			case UBoot:
-				switch(dir) {
-					case RIGHT:
-						for(int i = vec.posY; i < vec.posY+2; i++) {
-							grid[vec.posX][i].containsShip = true;
-						}
-						break;
-					case DOWN:
-						for(int i = vec.posX; i < vec.posX+2; i++) {
-							grid[i][vec.posY].containsShip = true;
-						}
-						break;
-				}
-				break;
+		} else {
+			// wenn Gegnerisches Feld
+			enemy = Player.SELF;
+			player = Player.ENEMY;
 		}
+		placeShips(1, 2, 3, 4);
+		turn = player;
+	}
+	/*	Anzahl und Gr����e der Schiffe
+    	ein Schlachtschiff (5 K��stchen)
+    	zwei Kreuzer (je 4 K��stchen)
+    	drei Zerst��rer (je 3 K��stchen)
+    	vier U-Boote (je 2 K��stchen)
+    */
+	
+	void placeShip(int amount, Direction dir) {
+		boolean found = false;
+		while(!found) {
+			// Zuf��llige Ausgangsposition festlegen
+			int y = (int) (Math.random() * grid.length);
+			int x = (int) (Math.random() * grid[y].length);
+			boolean error = false;
+			// ��berpr��fen ob platzieren m��glich ist
+			switch(dir) {
+				case DOWN:
+					if(y+amount > grid.length) y -= amount;
+					for(int i = 0; i < amount; i++) {
+						if(!checkSpace(y+i, x)) {
+							error = true;
+							break;
+						}
+					}
+					if(!error) {
+						for(int i = 0; i < amount; i++) {
+							grid[y+i][x].containsShip = true;
+						}
+						found = true;
+						break;
+					}
+					break;
+				case RIGHT:
+					if(x+amount > grid[y].length) x -= amount;
+					for(int i = 0; i < amount; i++) {
+						if(!checkSpace(y, x+i)) {
+							error = true;
+							break;
+						}
+					}
+					if(!error) {
+						for(int i = 0; i < amount; i++) {
+							grid[y][x+i].containsShip = true;
+						}
+						found = true;
+						break;
+					}
+					break;
+			}
+		}
+	}
+	
+	Direction randomDir() {
+		return Math.random() > 0.5 ? Direction.RIGHT : Direction.DOWN;
 	}
 	
 	void placeShips(int anzSchlachtschiffe, int anzKreuzer, int anzZerstoerer, int anzUboote) {
-		int placed = 0;
 		for(int i = 0; i < anzSchlachtschiffe; i++) {
-			for(int j = 0; j < grid.length; j++) {
-				for(int k = 0; k < grid[j].length; k++) {
-					if(k+4 < grid.length &&
-						!grid[j][k].containsShip &&
-						!grid[j][k+1].containsShip &&
-						!grid[j][k+2].containsShip &&
-						!grid[j][k+3].containsShip &&
-						!grid[j][k+4].containsShip) {
-						Direction d;
-						if(Math.random() > 0.5) {
-							d = Direction.RIGHT;
-						} else {
-							d = Direction.DOWN;
-						}
-						placeShip(ShipType.Schlachtschiff, new Vector(this, j, k), d);
-						placed++;
-						break;
-					}
-				}
-				if(placed >= anzSchlachtschiffe) break;
-			}
+			placeShip(5, randomDir());
 		}
-		placed = 0;
 		for(int i = 0; i < anzKreuzer; i++) {
-			for(int j = 0; j < grid.length; j++) {
-				for(int k = 0; k < grid[j].length; k++) {
-					if(k+4 < grid.length &&
-						!grid[j][k].containsShip &&
-						!grid[j][k+1].containsShip &&
-						!grid[j][k+2].containsShip &&
-						!grid[j][k+3].containsShip) {
-						Direction d;
-						if(Math.random() > 0.5) {
-							d = Direction.RIGHT;
-						} else {
-							d = Direction.DOWN;
-						}
-						placeShip(ShipType.Kreuzer, new Vector(this, j, k), d);
-						placed++;
-						break;
-					}
-				}
-				if(placed >= anzKreuzer) break;
-			}
+			placeShip(4, randomDir());
 		}
-		placed = 0;
 		for(int i = 0; i < anzZerstoerer; i++) {
-			for(int j = 0; j < grid.length; j++) {
-				for(int k = 0; k < grid[j].length; k++) {
-					if(k+4 < grid.length &&
-						!grid[j][k].containsShip &&
-						!grid[j][k+1].containsShip &&
-						!grid[j][k+2].containsShip) {
-						Direction d;
-						if(Math.random() > 0.5) {
-							d = Direction.RIGHT;
-						} else {
-							d = Direction.DOWN;
-						}
-						placeShip(ShipType.Zerstoerer, new Vector(this, j, k), d);
-						placed++;
-						break;
-					}
-				}
-				if(placed >= anzZerstoerer) break;
-			}
+			placeShip(3, randomDir());
 		}
-		placed = 0;
 		for(int i = 0; i < anzUboote; i++) {
-			for(int j = 0; j < grid.length; j++) {
-				for(int k = 0; k < grid[j].length; k++) {
-					if(k+4 < grid.length &&
-						!grid[j][k].containsShip &&
-						!grid[j][k+1].containsShip &&
-						!grid[j][k+2].containsShip) {
-						Direction d;
-						if(Math.random() > 0.5) {
-							d = Direction.RIGHT;
-						} else {
-							d = Direction.DOWN;
-						}
-						placeShip(ShipType.UBoot, new Vector(this, j, k), d);
-						placed++;
-						break;
-					}
-				}
-				if(placed >= anzUboote) break;
-			}
+			placeShip(2, randomDir());
 		}
+	}
+	
+	boolean checkSpace(int y, int x) {
+		boolean center = !grid[y][x].containsShip;
+		boolean topLeft = y-1 > 0 && x > 0 ? !grid[y-1][x-1].containsShip : true;
+		boolean topCenter = y-1 > 0 ? !grid[y-1][x].containsShip : true;
+		boolean topRight = y-1 > 0 && x+1 < grid[y].length ? !grid[y-1][x+1].containsShip : true;
+		boolean left = x-1 > 0 ? !grid[y][x-1].containsShip : true;
+		boolean right = x+1 < grid[y].length ? !grid[y][x+1].containsShip : true;
+		boolean botLeft = y+1 < grid.length && x-1 > 0 ? !grid[y+1][x-1].containsShip : true;
+		boolean botCenter = y+1 < grid.length ? !grid[y+1][x].containsShip : true;
+		boolean botRight = y+1 < grid.length && x+1 < grid[y].length ? !grid[y+1][x+1].containsShip : true;
+		return topLeft && topCenter && topRight &&
+			   left    && center    && right    &&
+			   botLeft && botCenter && botRight;
 	}
 	
 	void show() {
@@ -260,13 +203,14 @@ public class Spielfeld {
 				if(r.posX+1 < grid.length &&
 						grid[r.posX+1][r.posY].status == Status.FREE) {
 					shoot(new Vector(this, r.posX+1, r.posY));
-				} else if(r.posX-1 > 0 &&
+				} else if(r.posX-1 > -1 &&
 						grid[r.posX-1][r.posY].status == Status.FREE) {
 					shoot(new Vector(this, r.posX-1, r.posY));
 				} else if(r.posY+1 < grid.length &&
 						grid[r.posX][r.posY+1].status == Status.FREE) {
 					shoot(new Vector(this, r.posX, r.posY+1));
 				} else if(r.posY-1 < grid.length &&
+						r.posY-1 > -1 &&
 						grid[r.posX][r.posY-1].status == Status.FREE) {
 					shoot(new Vector(this, r.posX, r.posY-1));
 				}
@@ -287,6 +231,14 @@ public class Spielfeld {
 	}
 	
 	boolean shoot(String input) {
+		if(input.equals("CLEAR")) {
+			for(int i = 0; i < grid.length; i++) {
+				for(int j = 0; j < grid[i].length; j++) {
+					if(grid[i][j].containsShip ) grid[i][j].status = Status.HIT;
+				}
+			}
+			return true;
+		}
 		Vector coords = Vector.validate(this, input);
 		if(coords != null) {
 			if(grid[coords.posX][coords.posY].hit()) {

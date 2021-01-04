@@ -6,41 +6,61 @@ public class SchiffeVersenken {
 	
 	private static boolean gameover = false;
 	private static Scanner scan = new Scanner(System.in);
-	private static Spielfeld feld;
-	private static Spielfeld feldGegner;
+	public static Spielfeld feld;
 	private static boolean validMove = true;
 	
-	public static void init() {
-		feld = new Spielfeld(10, 10, Spielmodus.vsAI);
-		feld.placeShips(1, 2, 3, 4);
-		feldGegner = new Spielfeld(10, 10, Spielmodus.vsAI);
-		feldGegner.placeShips(1, 2, 3, 4);
-		feld.init(feldGegner, Player.SELF, Player.ENEMY);
-		feldGegner.init(feld, Player.ENEMY, Player.SELF);
-		feld.turn = Player.SELF;
+	public static void clear(int nl) {
+		for(int i = 0; i < nl; i++) {
+			System.out.println();
+		}
 	}
 
 	public static void main(String[] args) {
-		init();
+		clear(20);
+		MainMenu mm = new MainMenu();
+		mm.show();
 		gameloop();
 	}
 	
 	private static void gameloop() {
 		while(!gameover) {
-			feld.show();
+			clear(20);
 			System.out.println("Spieler " + feld.turn + " ist an der Reihe!");
-			if(feld.turn == Player.SELF) {
-				String input = scan.next();
-				validMove = feldGegner.shoot(input);
-			} else {
-				validMove = feld.aiTurn();
+			switch(feld.mode) {
+				case vsAI:
+					System.out.println(feld.turn);
+					if(feld.turn == Player.SELF) {
+						feld.show();
+						String input = scan.next();
+						validMove = feld.enemyField.shoot(input);
+					} else {
+						validMove = feld.aiTurn();
+						feld.enemyField.show();
+					}
+					break;
+				case local:
+					if(feld.turn == Player.SELF) {
+						feld.show();
+						String input = scan.next();
+						validMove = feld.enemyField.shoot(input);
+					} else {
+						feld.enemyField.show();
+						String input = scan.next();
+						validMove = feld.shoot(input);
+					}
+					break;
+				case online:
+					break;
 			}
+			
 			if(feld.isOver()) {
-				System.out.println(Player.ENEMY +" won the game!");
+				feld.show();
+				System.out.println(Player.ENEMY +" hat gewonnen!");
 				gameover = true;
 			};
-			if(feldGegner.isOver()) {
-				System.out.println(Player.SELF +" won the game!");
+			if(feld.enemyField.isOver()) {
+				feld.show();
+				System.out.println(Player.SELF +" hat gewonnen!");
 				gameover = true;
 			};
 			if(validMove) feld.changeTurn();

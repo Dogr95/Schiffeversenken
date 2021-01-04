@@ -62,6 +62,8 @@ public class Vector {
 				}
 			} catch(StringIndexOutOfBoundsException sE) {
 				return null;
+			} catch (NumberFormatException eE) {
+				return null;
 			}
 		}
 	}
